@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local env and runtime data
+.env
+backend/.cache/
+data/uploads/
+phoenix-data/
+ollama-data/
+backend/eval/last_results.json
+node_modules/
+frontend/dist/

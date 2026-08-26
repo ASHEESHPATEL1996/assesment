@@ -1,0 +1,34 @@
+[
+  {
+    "question": "How many PTO days do full-time employees receive each year?",
+    "ground_truth": "Full-time employees receive 20 days of paid time off each calendar year."
+  },
+  {
+    "question": "Who is the CEO of Acme Robotics and where is the headquarters?",
+    "ground_truth": "The CEO is Maya Chen and headquarters is in Austin, Texas."
+  },
+  {
+    "question": "What is the parental leave policy for a primary caregiver?",
+    "ground_truth": "Primary caregivers receive 16 weeks of paid parental leave."
+  },
+  {
+    "question": "How many work-from-home days are allowed each week, and which days are office days?",
+    "ground_truth": "Employees may work from home 3 days per week and must be in the office on Tuesdays and Thursdays."
+  },
+  {
+    "question": "What is the expense limit that does not need manager approval?",
+    "ground_truth": "Employees may expense work purchases up to $75 without manager approval."
+  },
+  {
+    "question": "When are the two promotion cycles?",
+    "ground_truth": "Promotion cycles run in April and October."
+  },
+  {
+    "question": "Is MFA required for company accounts?",
+    "ground_truth": "Yes. Multi-factor authentication is required on every company account."
+  },
+  {
+    "question": "What stipend do on-call engineers receive?",
+    "ground_truth": "Engineers on the production on-call rotation receive a $200 per week stipend."
+  }
+]

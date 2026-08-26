@@ -1,0 +1,34 @@
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@400;500;600&display=swap");
+
+:root {
+  --foundry-copper: #c9844a;
+  --foundry-moss: #7f9b6b;
+}
+
+html,
+body,
+button,
+input,
+textarea {
+  font-family: Outfit, ui-sans-serif, system-ui, sans-serif !important;
+}
+
+body::before {
+  content: "";
+  display: block;
+  height: 3px;
+  background: linear-gradient(90deg, var(--foundry-moss), var(--foundry-copper));
+}
+
+a[href="/"] {
+  font-family: "Instrument Serif", Georgia, serif !important;
+  letter-spacing: -0.02em;
+}
+
+button.bg-black,
+button.bg-gray-900,
+.dark button.bg-white {
+  background: var(--foundry-copper) !important;
+  color: #1a120c !important;
+  border-color: transparent !important;
+}

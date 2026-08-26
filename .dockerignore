@@ -1,0 +1,11 @@
+.git
+.cursor
+**/.venv
+**/__pycache__
+**/*.pyc
+**/.cache
+frontend/node_modules
+frontend/dist
+backend/.cache
+*.egg-info
+.env

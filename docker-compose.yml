@@ -1,0 +1,143 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: rag
+      POSTGRES_PASSWORD: rag
+      POSTGRES_DB: ragdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag -d ragdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    environment:
+      OLLAMA_CONTEXT_LENGTH: "2048"
+      OLLAMA_NUM_PARALLEL: "1"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+
+  ollama-pull:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until ollama list >/dev/null 2>&1; do echo waiting for ollama; sleep 2; done
+        ollama pull llama3.2:3b
+        ollama pull nomic-embed-text
+    restart: "no"
+
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    ports:
+      - "6006:6006"
+      - "4317:4317"
+    volumes:
+      - phoenix_data:/phoenix/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://rag:rag@postgres:5432/ragdb
+      OLLAMA_BASE_URL: http://ollama:11434
+      PHOENIX_COLLECTOR_ENDPOINT: http://phoenix:6006
+      PHOENIX_BASE_URL: http://phoenix:6006
+      LLM_MODEL: llama3.2:3b
+      EMBEDDING_MODEL: nomic-embed-text
+      EMBED_DIM: "768"
+      RERANK_MODEL: cross-encoder/ms-marco-MiniLM-L-6-v2
+      MODEL_ID: agentic-rag
+      INGEST_SAMPLES_ON_START: "true"
+      SAMPLE_DIR: /app/data/sample
+      OPENAI_API_KEY: ollama
+    volumes:
+      - ./data:/app/data:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+      ollama-pull:
+        condition: service_completed_successfully
+      phoenix:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+
+  open-webui:
+    build:
+      context: ./openwebui
+      dockerfile: Dockerfile
+    ports:
+      - "3000:8080"
+    environment:
+      ENABLE_OLLAMA_API: "false"
+      OPENAI_API_BASE_URL: http://backend:8000/v1
+      OPENAI_API_KEY: unused
+      OPENAI_API_BASE_URLS: http://backend:8000/v1
+      OPENAI_API_KEYS: unused
+      WEBUI_AUTH: "false"
+      ENABLE_PERSISTENT_CONFIG: "false"
+      BYPASS_MODEL_ACCESS_CONTROL: "true"
+      WEBUI_NAME: Agentic RAG
+      DEFAULT_MODELS: agentic-rag
+      DEFAULT_PINNED_MODELS: agentic-rag
+      MODEL_ORDER_LIST: '["agentic-rag"]'
+      AIOHTTP_CLIENT_TIMEOUT: "360"
+      AIOHTTP_CLIENT_TIMEOUT_MODEL_LIST: "30"
+      ENABLE_TITLE_GENERATION: "false"
+      ENABLE_FOLLOW_UP_GENERATION: "false"
+      ENABLE_AUTOCOMPLETE_GENERATION: "false"
+      ENABLE_TAGS_GENERATION: "false"
+      ENABLE_IMAGE_GENERATION: "false"
+      ENABLE_WEB_SEARCH: "false"
+      ENABLE_CODE_INTERPRETER: "false"
+      DEFAULT_INTERFACE_SETTINGS: '{"widescreenMode":true}'
+      DEFAULT_PROMPT_SUGGESTIONS: >-
+        [{"title":["PTO policy","days off"],"content":"How many PTO days do employees get?"},{"title":["Remote work","hybrid days"],"content":"What is the remote work policy?"},{"title":["Expenses","travel approval"],"content":"Who approves travel bookings over $500?"}]
+      WEBUI_BANNERS: >-
+        [{"id":"handbook","type":"info","title":"Acme handbook","content":"Answers come from ingested documents with filename and page citations. Traces are in Phoenix at port 6006.","dismissible":true,"timestamp":1}]
+    volumes:
+      - openwebui_data:/app/backend/data
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  ollama_data:
+  phoenix_data:
+  openwebui_data:
